@@ -1,0 +1,72 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local Tab = Rayfield:FindFirstChild("Window").Tabs[1] -- ajusta según tu estructura
+
+local characterNames = {"sonic", "cream", "vanilla", "eggman", "bendy", "boris", "cuphead", "mugman", "monika", "sayori", "sans", "frisk", "vortex", "yuri", "chara"}
+local savedCooldowns = {} -- guardar valores originales
+local selectedCharacter
+
+-- Primer Dropdown: personajes
+Tab:CreateDropdown({
+    Name = "Select Character",
+    Options = characterNames,
+    CurrentOption = characterNames[1],
+    Flag = "CharacterDropdown",
+    Callback = function(charName)
+        local charFolder = workspace:FindFirstChild(player.Name) and workspace[player.Name]:FindFirstChild("CharacterFolder")
+        local charNameObj = charFolder and charFolder:FindFirstChild("CharacterName")
+        if charNameObj and charNameObj:IsA("StringValue") and charNameObj.Value:lower() == charName:lower() then
+            selectedCharacter = charName
+            local abilityGui = player:WaitForChild("PlayerGui"):WaitForChild("AbilitysGui")
+            local abilityFrame = abilityGui:WaitForChild("AbilityFrame")
+            local abilityNames = {}
+            for _, ability in ipairs(abilityFrame:GetChildren()) do
+                local config = ability:FindFirstChild("Configuration")
+                if config then
+                    local cooldown = config:FindFirstChild("CoolDown")
+                    if cooldown then
+                        table.insert(abilityNames, ability.Name)
+                        if not savedCooldowns[ability.Name] then
+                            savedCooldowns[ability.Name] = cooldown.Value
+                        end
+                    end
+                end
+            end
+
+            -- Segundo Dropdown: habilidades
+            Tab:CreateDropdown({
+                Name = "Select Ability",
+                Options = abilityNames,
+                CurrentOption = abilityNames[1],
+                Flag = "AbilityDropdown",
+                Callback = function(abilityName)
+                    local ability = abilityFrame:FindFirstChild(abilityName)
+                    local cooldown = ability and ability:FindFirstChild("Configuration") and ability.Configuration:FindFirstChild("CoolDown")
+                    if cooldown then
+                        cooldown.Value = 0
+                    end
+                end
+            })
+        else
+            selectedCharacter = nil
+        end
+    end
+})
+
+-- Botón: reset cooldowns
+Tab:CreateButton({
+    Name = "Reset Cooldowns",
+    Callback = function()
+        if selectedCharacter then
+            local abilityGui = player:WaitForChild("PlayerGui"):WaitForChild("AbilitysGui")
+            local abilityFrame = abilityGui:WaitForChild("AbilityFrame")
+            for abilityName, originalValue in pairs(savedCooldowns) do
+                local ability = abilityFrame:FindFirstChild(abilityName)
+                local cooldown = ability and ability:FindFirstChild("Configuration") and ability.Configuration:FindFirstChild("CoolDown")
+                if cooldown then
+                    cooldown.Value = originalValue
+                end
+            end
+        end
+    end
+})
