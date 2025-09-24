@@ -1,21 +1,26 @@
--- fov.lua
-local cam = workspace.CurrentCamera
+--// FOV Script
 local RunService = game:GetService("RunService")
+local fovEnabled = false
+local fovValue = 70
+local fovConnection
 
--- Obtiene valor desde query param en la URL (?value=90)
-local url = debug.getinfo(2).source
-local value = tonumber(url:match("value=(%d+)")) or 70
-local fovEnabled = true
+-- Mantener el FOV siempre forzado
+local function enforceFOV()
+    if fovConnection then fovConnection:Disconnect() end
+    fovConnection = RunService.RenderStepped:Connect(function()
+        if fovEnabled and workspace.CurrentCamera then
+            workspace.CurrentCamera.FieldOfView = fovValue
+        end
+    end)
+end
 
-local conn
-conn = RunService.RenderStepped:Connect(function()
-    if fovEnabled then
-        cam.FieldOfView = value
-    end
-end)
+getgenv().EnableFOV = function(value)
+    fovEnabled = true
+    fovValue = value
+    enforceFOV()
+end
 
--- Cleanup
-return function()
+getgenv().DisableFOV = function()
     fovEnabled = false
-    if conn then conn:Disconnect() end
+    if fovConnection then fovConnection:Disconnect() end
 end
