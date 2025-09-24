@@ -1,10 +1,12 @@
---// FOV Script
+-- FOV.lua
+-- Script externo para controlar y forzar el FOV del jugador
+
 local RunService = game:GetService("RunService")
 local fovEnabled = false
 local fovValue = 70
 local fovConnection
 
--- Mantener el FOV siempre forzado
+-- Función para forzar FOV
 local function enforceFOV()
     if fovConnection then fovConnection:Disconnect() end
     fovConnection = RunService.RenderStepped:Connect(function()
@@ -14,13 +16,20 @@ local function enforceFOV()
     end)
 end
 
+-- Función global para habilitar y cambiar FOV
 getgenv().EnableFOV = function(value)
     fovEnabled = true
-    fovValue = value
+    fovValue = value or 70
     enforceFOV()
 end
 
+-- Función global para deshabilitar FOV
 getgenv().DisableFOV = function()
     fovEnabled = false
     if fovConnection then fovConnection:Disconnect() end
+end
+
+-- Retornar función de limpieza opcional (si se quiere usar con unloadRemote)
+return function()
+    getgenv().DisableFOV()
 end
