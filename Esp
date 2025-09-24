@@ -1,0 +1,126 @@
+-- esp.lua mejorado
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local highlights = {}
+local espEnabled = true
+
+-------------------------
+-- Colores ESP base
+-------------------------
+local colors = {
+    ["sonic"] = Color3.fromRGB(0, 0, 255),
+    ["sonic.exe"] = Color3.fromRGB(255, 0, 0),
+    ["vanilla"] = Color3.fromRGB(255, 255, 0),
+    ["bendy"] = Color3.fromRGB(0, 0, 0),
+    ["boris"] = Color3.fromRGB(128, 64, 0),
+    ["sayori"] = Color3.fromRGB(255, 192, 203),
+    ["eggman"] = Color3.fromRGB(255, 128, 0),
+    ["frisk"] = Color3.fromRGB(0, 255, 0),
+    ["mugman"] = Color3.fromRGB(0, 255, 255),
+    ["sans"] = Color3.fromRGB(128, 128, 128),
+    ["monika"] = Color3.fromRGB(0, 128, 0),
+    ["cream"] = Color3.fromRGB(255, 255, 224),
+    ["yuri"] = Color3.fromRGB(255, 0, 0),
+    ["cuphead"] = Color3.fromRGB(128, 0, 255),
+    ["chara"] = Color3.fromRGB(255, 0, 0)
+}
+
+local function getColor(name, teamValue)
+    if not name then return Color3.fromRGB(255,255,255) end
+
+    -- Si el Team contiene "exe", forzar rojo
+    if teamValue and teamValue:lower():find("exe") then
+        return Color3.fromRGB(255,0,0)
+    end
+
+    local lower = name:lower()
+    if lower:sub(-4) == ".exe" or lower == "yuri" or lower == "chara" then
+        return Color3.fromRGB(255,0,0)
+    end
+
+    return colors[name] or Color3.fromRGB(255,255,255)
+end
+
+-------------------------
+-- Crear highlight
+-------------------------
+local function createHighlight(player)
+    if player == LocalPlayer then return end
+    if not player.Character then return end
+
+    local hl = highlights[player]
+    if not hl then
+        hl = Instance.new("Highlight")
+        hl.Name = "ESP_Highlight"
+        hl.Adornee = player.Character
+        hl.FillTransparency = 0.7
+        hl.OutlineTransparency = 0
+        hl.Parent = player.Character
+        highlights[player] = hl
+    end
+
+    local charName, teamValue
+    local folder = workspace:FindFirstChild("gameInstance") and
+                   workspace.gameInstance:FindFirstChild("hitBoxModule") and
+                   workspace.gameInstance.hitBoxModule:FindFirstChild("Players") and
+                   workspace.gameInstance.hitBoxModule.Players:FindFirstChild(player.Name)
+
+    if folder then
+        local charFolder = folder:FindFirstChild("CharacterFolder")
+        if charFolder then
+            -- CharacterName listener
+            local charNameObj = charFolder:FindFirstChild("CharacterName")
+            if charNameObj and charNameObj:IsA("StringValue") then
+                charName = charNameObj.Value
+                charNameObj:GetPropertyChangedSignal("Value"):Connect(function()
+                    if hl and hl.Parent then
+                        charName = charNameObj.Value
+                        local newColor = getColor(charName, teamValue)
+                        hl.FillColor = newColor
+                        hl.OutlineColor = newColor
+                    end
+                end)
+            end
+
+            -- CharacterTeam listener
+            local teamObj = charFolder:FindFirstChild("CharacterTeam")
+            if teamObj and teamObj:IsA("StringValue") then
+                teamValue = teamObj.Value
+                teamObj:GetPropertyChangedSignal("Value"):Connect(function()
+                    if hl and hl.Parent then
+                        teamValue = teamObj.Value
+                        local newColor = getColor(charName, teamValue)
+                        hl.FillColor = newColor
+                        hl.OutlineColor = newColor
+                    end
+                end)
+            end
+        end
+    end
+
+    local color = getColor(charName, teamValue)
+    hl.FillColor = color
+    hl.OutlineColor = color
+end
+
+-------------------------
+-- Inicializar
+-------------------------
+for _, player in ipairs(Players:GetPlayers()) do
+    createHighlight(player)
+end
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        if espEnabled then createHighlight(player) end
+    end)
+end)
+
+-- Cleanup
+return function()
+    espEnabled = false
+    for _, hl in pairs(highlights) do
+        if hl then hl:Destroy() end
+    end
+    highlights = {}
+end
