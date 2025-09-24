@@ -1,0 +1,73 @@
+-- collision.lua
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local collisionEnabled = true
+local collisions = {}
+
+local PlayersFolder = workspace:WaitForChild("gameInstance"):WaitForChild("hitBoxModule"):WaitForChild("Players")
+local characterFolder = workspace:WaitForChild(LocalPlayer.Name):WaitForChild("CharacterFolder")
+local characterNameObj = characterFolder:FindFirstChild("CharacterName")
+local charNameValue = characterNameObj and characterNameObj:IsA("StringValue") and characterNameObj.Value or nil
+
+local sizeMapping = {
+    ["sonic"] = Vector3.new(30, 8, 30),
+    ["vanilla"] = Vector3.new(30, 8, 30),
+    ["bendy"] = Vector3.new(30, 8, 30),
+    ["boris"] = Vector3.new(30, 8, 30),
+    ["sayori"] = Vector3.new(30, 30, 30),
+    ["eggman"] = Vector3.new(30, 8, 30),
+    ["frisk"] = Vector3.new(30, 30, 30),
+    ["mugman"] = Vector3.new(30, 30, 30),
+    ["sans"] = Vector3.new(30, 30, 30),
+    ["monika"] = Vector3.new(30, 30, 30),
+    ["cream"] = Vector3.new(30, 30, 30),
+    ["sonic.exe"] = Vector3.new(25, 8, 25),
+    ["yuri"] = Vector3.new(25, 8, 25),
+    ["cuphead"] = Vector3.new(30, 7, 30),
+    ["chara"] = Vector3.new(12, 12, 12)
+}
+
+local function getCustomSize(name)
+    return sizeMapping[name] or Vector3.new(15, 15, 15)
+end
+
+local function anyPlayerHasChara()
+    for _, folder in ipairs(PlayersFolder:GetChildren()) do
+        local charFolder = folder:FindFirstChild("CharacterFolder")
+        if charFolder then
+            local charNameObj = charFolder:FindFirstChild("CharacterName")
+            if charNameObj and charNameObj:IsA("StringValue") and charNameObj.Value == "chara" then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+for _, playerFolder in ipairs(PlayersFolder:GetChildren()) do
+    local hitFolder = playerFolder:FindFirstChild("HitFolder")
+    if hitFolder then
+        local collision = hitFolder:FindFirstChild("collision")
+        if collision and collision:IsA("BasePart") then
+            local newSize = getCustomSize(charNameValue)
+            if charNameValue == "cuphead" and anyPlayerHasChara() then
+                newSize = Vector3.new(30, 4, 30)
+            end
+            collision.Size = newSize
+            collision.Transparency = 1
+            table.insert(collisions, collision)
+        end
+    end
+end
+
+-- Cleanup
+return function()
+    collisionEnabled = false
+    for _, col in ipairs(collisions) do
+        if col and col:IsA("BasePart") then
+            col.Size = Vector3.new(2,6,2)
+            col.Transparency = 1
+        end
+    end
+    collisions = {}
+end
