@@ -1,83 +1,88 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local module = {}
-local charDropdown, abilityDropdown, resetButton
+local AbilityFramePath = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("AbilitysGui"):WaitForChild("AbilityFrame")
+
 local savedCooldowns = {}
+local ui = { CharacterDropdown = nil, AbilityDropdown = nil, ResetButton = nil }
 local currentCharacter = nil
 
--- Vincular Dropdowns y Botón desde Rayfield
-function module.BindUI(charDD, abilityDD, resetBtn)
-    charDropdown = charDD
-    abilityDropdown = abilityDD
-    resetButton = resetBtn
-end
+-- Función para escanear habilidades y llenar el dropdown
+local function updateAbilities()
+    if not ui.AbilityDropdown then return end
 
--- Seleccionar Personaje
-function module.SelectCharacter(characterName)
-    currentCharacter = characterName
-    local charFolder = workspace:FindFirstChild(LocalPlayer.Name) and workspace[LocalPlayer.Name]:FindFirstChild("CharacterFolder")
-    if not charFolder then return end
-
-    local charNameObj = charFolder:FindFirstChild("CharacterName")
-    if charNameObj and charNameObj:IsA("StringValue") and charNameObj.Value == characterName then
-        -- Activar segundo Dropdown (habilidades)
-        module.UpdateAbilities()
-    else
-        -- Si no coincide, vaciar habilidades
-        abilityDropdown:Set({Options = {}, CurrentOption = ""})
-    end
-end
-
--- Actualizar lista de habilidades en el segundo Dropdown
-function module.UpdateAbilities()
-    local abilityFrame = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("AbilitysGui"):WaitForChild("AbilityFrame")
     local options = {}
-
-    for _, ability in ipairs(abilityFrame:GetChildren()) do
+    for _, ability in ipairs(AbilityFramePath:GetChildren()) do
         local config = ability:FindFirstChild("Configuration")
-        if config then
-            local cd = config:FindFirstChild("CoolDown")
-            if cd and cd:IsA("NumberValue") then
-                table.insert(options, ability.Name)
+        if config and config:FindFirstChild("CoolDown") then
+            table.insert(options, ability.Name)
 
-                -- Guardar cooldown original si no está guardado y no es 0
-                if not savedCooldowns[ability.Name] and cd.Value ~= 0 then
-                    savedCooldowns[ability.Name] = cd.Value
-                end
+            -- Guardar el cooldown original una sola vez (no sobrescribir si ya existe)
+            if not savedCooldowns[ability.Name] and config.CoolDown.Value ~= 0 then
+                savedCooldowns[ability.Name] = config.CoolDown.Value
             end
         end
     end
 
-    abilityDropdown:Set({Options = options, CurrentOption = ""})
+    -- Actualizar el dropdown con las habilidades disponibles
+    ui.AbilityDropdown:Set({Options = options})
 end
 
--- Seleccionar habilidad y poner CoolDown en 0
-function module.SelectAbility(abilityName)
-    local abilityFrame = LocalPlayer.PlayerGui.AbilitysGui.AbilityFrame
-    local ability = abilityFrame:FindFirstChild(abilityName)
+-- Selección de personaje
+local function selectCharacter(name)
+    local charFolder = workspace:WaitForChild(LocalPlayer.Name):WaitForChild("CharacterFolder")
+    local charName = charFolder:WaitForChild("CharacterName")
+
+    if charName.Value == name then
+        currentCharacter = name
+        updateAbilities()
+
+        -- Escuchar cambios en AbilityFrame
+        AbilityFramePath.ChildAdded:Connect(updateAbilities)
+        AbilityFramePath.ChildRemoved:Connect(function(child)
+            savedCooldowns[child.Name] = nil
+            updateAbilities()
+        end)
+    else
+        currentCharacter = nil
+        ui.AbilityDropdown:Set({Options = {}})
+    end
+end
+
+-- Selección de habilidad (pone cooldown = 0)
+local function selectAbility(abilityName)
+    local ability = AbilityFramePath:FindFirstChild(abilityName)
     if ability then
         local config = ability:FindFirstChild("Configuration")
-        local cd = config and config:FindFirstChild("CoolDown")
-        if cd then
-            cd.Value = 0
+        if config and config:FindFirstChild("CoolDown") then
+            config.CoolDown.Value = 0
         end
     end
 end
 
--- Resetear todos los cooldowns a su valor original
-function module.ResetCooldowns()
-    local abilityFrame = LocalPlayer.PlayerGui.AbilitysGui.AbilityFrame
-    for abilityName, originalValue in pairs(savedCooldowns) do
-        local ability = abilityFrame:FindFirstChild(abilityName)
+-- Resetear todos los cooldowns a sus valores originales
+local function resetCooldowns()
+    for abilityName, value in pairs(savedCooldowns) do
+        local ability = AbilityFramePath:FindFirstChild(abilityName)
         if ability then
             local config = ability:FindFirstChild("Configuration")
-            local cd = config and config:FindFirstChild("CoolDown")
-            if cd then
-                cd.Value = originalValue
+            if config and config:FindFirstChild("CoolDown") then
+                config.CoolDown.Value = value
             end
         end
     end
 end
 
-return module
+-- Conectar UI desde Rayfield
+local function bindUI(charDropdown, abilityDropdown, resetBtn)
+    ui.CharacterDropdown = charDropdown
+    ui.AbilityDropdown = abilityDropdown
+    ui.ResetButton = resetBtn
+end
+
+return {
+    BindUI = bindUI,
+    SelectCharacter = selectCharacter,
+    SelectAbility = selectAbility,
+    ResetCooldowns = resetCooldowns,
+}
