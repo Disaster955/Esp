@@ -1,4 +1,4 @@
--- FOV.lua
+-- FOV.lu
 local RunService = game:GetService("RunService")
 local fovEnabled = false
 local fovValue = 70
