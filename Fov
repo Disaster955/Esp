@@ -1,20 +1,20 @@
--- FOV.lu
+-- FOV.lua
 local RunService = game:GetService("RunService")
 local fovEnabled = false
-local fovValue = 70
+getgenv().fovValue = 70 -- valor global que se actualizará desde el slider
 local fovConnection
 
 -- Forzar FOV en cada frame
 fovConnection = RunService.RenderStepped:Connect(function()
     if fovEnabled and workspace.CurrentCamera then
-        workspace.CurrentCamera.FieldOfView = fovValue
+        workspace.CurrentCamera.FieldOfView = getgenv().fovValue
     end
 end)
 
 -- Función global para habilitar y cambiar FOV
 getgenv().EnableFOV = function(value)
     fovEnabled = true
-    fovValue = value or 70 -- solo actualizar el valor, RenderStepped ya está activo
+    getgenv().fovValue = value or 70
 end
 
 -- Función global para deshabilitar FOV
@@ -24,5 +24,5 @@ end
 
 -- Función de limpieza para unloadRemote
 return function()
-    fovEnabled = false
+    getgenv().DisableFOV()
 end
