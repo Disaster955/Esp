@@ -1,0 +1,21 @@
+-- fov.lua
+local cam = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+
+-- Obtiene valor desde query param en la URL (?value=90)
+local url = debug.getinfo(2).source
+local value = tonumber(url:match("value=(%d+)")) or 70
+local fovEnabled = true
+
+local conn
+conn = RunService.RenderStepped:Connect(function()
+    if fovEnabled then
+        cam.FieldOfView = value
+    end
+end)
+
+-- Cleanup
+return function()
+    fovEnabled = false
+    if conn then conn:Disconnect() end
+end
