@@ -8,7 +8,7 @@ local selectedCharacter
 
 -- Primer Dropdown: personajes
 Tab:CreateDropdown({
-    Name = "Select Character",
+    Name = "Seleccionar personaje",
     Options = characterNames,
     CurrentOption = characterNames[1],
     Flag = "CharacterDropdown",
@@ -35,7 +35,7 @@ Tab:CreateDropdown({
 
             -- Segundo Dropdown: habilidades
             Tab:CreateDropdown({
-                Name = "Select Ability",
+                Name = "Seleccionar habilidad",
                 Options = abilityNames,
                 CurrentOption = abilityNames[1],
                 Flag = "AbilityDropdown",
