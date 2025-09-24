@@ -1,0 +1,46 @@
+-- jump.lua
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local LocalPlayer = Players.LocalPlayer
+local jumpEnabled = true
+local connections = {}
+
+local jumpTask = task.spawn(function()
+    while jumpEnabled do
+        task.wait(0.1)
+        pcall(function()
+            StarterGui:SetCore("JumpButtonEnabled", true)
+            StarterGui:SetCore("JumpButtonVisible", true)
+        end)
+    end
+end)
+table.insert(connections, jumpTask)
+
+local function setupChar(char)
+    local hum = char:WaitForChild("Humanoid")
+    local conn
+    conn = RunService.RenderStepped:Connect(function()
+        if jumpEnabled and hum then
+            hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+            hum.AutoJumpEnabled = false
+        end
+    end)
+    table.insert(connections, conn)
+end
+
+if LocalPlayer.Character then setupChar(LocalPlayer.Character) end
+LocalPlayer.CharacterAdded:Connect(setupChar)
+
+-- Cleanup
+return function()
+    jumpEnabled = false
+    for _, conn in ipairs(connections) do
+        if typeof(conn) == "RBXScriptConnection" then
+            conn:Disconnect()
+        elseif typeof(conn) == "thread" then
+            task.cancel(conn)
+        end
+    end
+    connections = {}
+end
