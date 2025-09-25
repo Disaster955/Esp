@@ -43,9 +43,11 @@ local function crearBoton(nombre, parent, borderColor)
     btn.TextColor3 = Color3.fromRGB(255,255,255)
     btn.TextScaled = true
     btn.Parent = parent
+    btn.Visible = true
     return btn
 end
 
+-- Función para activar habilidades
 local function activarHabilidad(nombre)
     local abilityGui = player:WaitForChild("PlayerGui"):WaitForChild("AbilitysGui")
     local abilityFrame = abilityGui:WaitForChild("AbilityFrame")
@@ -55,8 +57,13 @@ local function activarHabilidad(nombre)
     cooldown.Value = 0
 end
 
--- Crear botones principales
-local nombresBotones = {"Sonic","Cream","Vanilla","Eggman","Bendy","Boris","Cuphead","Mugman","Monika","Sayori","Sans","Frisk","Vortex","Yuri","Chara"}
+-- Lista de botones principales
+local nombresBotones = {
+    "Sonic","Cream","Vanilla","Eggman","Bendy","Boris",
+    "Cuphead","Mugman","Monika","Sayori","Sans","Frisk",
+    "Vortex","Yuri","Chara","GlobalMinion"
+}
+
 local botonesPrincipales = {}
 local layoutIndex = 1
 
@@ -67,67 +74,71 @@ for _, nombre in ipairs(nombresBotones) do
     botonesPrincipales[nombre] = btn
 end
 
--- Crear sub-botones de Sonic
+-- Definición de sub-botones
+local habilidades = {
+    Sonic   = {"SpeedBoost","SpinDash","Spring"},
+    Cream   = {"DropDash","Glide","JumpBoost"},
+    Vanilla = {"Counter","Grab","Rush"},
+    Eggman  = {"Flamethrower","Jetpack","MineTrap"},
+    Bendy   = {"InkPuddle","InkFlow","InkWave"},
+    Boris   = {"AxeAttack","AxeBlock","AxeThrow"},
+    Cuphead = {"Dash","Parry","SuperArt"},
+    Mugman  = {"EXShot","PeaShooter","SuperArt1"},
+    Monika  = {"Glitch","WritePoem","Manipulate"},
+    Sayori  = {"HEAL","CHEER","SCREAM"},
+    Sans    = {"GasterBlaster","Teleport","BoneBarrier"},
+    Frisk   = {"Stick","SeaTea","Pull","Act"},
+    Vortex  = {"Attack","Invisiblity","Jump","Laugh","Rage"},
+    Yuri    = {"Frenzy","Indicator","KnifeAttack","KnifeDash","Laugh"},
+    Chara   = {"CharaAttack","Save","SaveThrow","Slash"},
+    GlobalMinion = {"Attack"}
+}
+
+-- Crear todos los sub-botones
 local subBotones = {}
-local function crearSubBoton(nombre, borderColor)
-    local btn = crearBoton(nombre, frame, borderColor)
-    btn.Visible = false
-    subBotones[nombre] = btn
-    return btn
+for personaje, lista in pairs(habilidades) do
+    subBotones[personaje] = {}
+    for _, habilidad in ipairs(lista) do
+        local btn = crearBoton(habilidad, frame, Color3.fromRGB(180,180,180))
+        btn.Visible = false
+        subBotones[personaje][habilidad] = btn
+        -- Conectar habilidad
+        btn.MouseButton1Click:Connect(function()
+            activarHabilidad(habilidad)
+        end)
+    end
 end
 
-crearSubBoton("SpeedBoost", Color3.fromRGB(180,180,180))
-crearSubBoton("SpinDash", Color3.fromRGB(180,180,180))
-crearSubBoton("Spring", Color3.fromRGB(180,180,180))
-crearSubBoton("Minion", Color3.fromRGB(80,80,80))
-crearSubBoton("Attack", Color3.fromRGB(180,180,180))
-
--- Función para actualizar LayoutOrder dinámicamente
+-- Actualizar LayoutOrder dinámicamente
 local function actualizarLayout()
     local index = 1
     for _, nombre in ipairs(nombresBotones) do
         local btn = botonesPrincipales[nombre]
         btn.LayoutOrder = index
         index += 1
-        if nombre == "Sonic" and subBotones["SpeedBoost"].Visible then
-            for _, subNombre in ipairs({"SpeedBoost","SpinDash","Spring","Minion"}) do
-                subBotones[subNombre].LayoutOrder = index
-                index += 1
-            end
-            if subBotones["Attack"].Visible then
-                subBotones["Attack"].LayoutOrder = index
-                index += 1
+        if subBotones[nombre] then
+            for _, subNombre in ipairs(habilidades[nombre]) do
+                if subBotones[nombre][subNombre].Visible then
+                    subBotones[nombre][subNombre].LayoutOrder = index
+                    index += 1
+                end
             end
         end
     end
 end
 
--- Toggle Sonic
-local sonicOpen = false
-botonesPrincipales["Sonic"].MouseButton1Click:Connect(function()
-    sonicOpen = not sonicOpen
-    for _, name in ipairs({"SpeedBoost","SpinDash","Spring","Minion"}) do
-        subBotones[name].Visible = sonicOpen
-    end
-    if not sonicOpen then
-        subBotones["Attack"].Visible = false
-    end
-    actualizarLayout()
-end)
-
--- Toggle Minion (Attack)
-local minionOpen = false
-subBotones["Minion"].MouseButton1Click:Connect(function()
-    minionOpen = not minionOpen
-    subBotones["Attack"].Visible = minionOpen
-    actualizarLayout()
-end)
-
--- Conectar habilidades
-subBotones["SpeedBoost"].MouseButton1Click:Connect(function() activarHabilidad("SpeedBoost") end)
-subBotones["SpinDash"].MouseButton1Click:Connect(function() activarHabilidad("SpinDash") end)
-subBotones["Spring"].MouseButton1Click:Connect(function() activarHabilidad("Spring") end)
-subBotones["Attack"].MouseButton1Click:Connect(function() activarHabilidad("Attack") end)
+-- Toggle sub-botones
+local abiertos = {}
+for personaje, lista in pairs(habilidades) do
+    abiertos[personaje] = false
+    botonesPrincipales[personaje].MouseButton1Click:Connect(function()
+        abiertos[personaje] = not abiertos[personaje]
+        for _, habilidad in ipairs(lista) do
+            subBotones[personaje][habilidad].Visible = abiertos[personaje]
+        end
+        actualizarLayout()
+    end)
+end
 
 -- Botón "-" movible
 local button1 = Instance.new("TextButton")
