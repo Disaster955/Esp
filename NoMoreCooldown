@@ -1,4 +1,4 @@
--- LocalScript final optimizado
+-- LocalScript
 
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -29,17 +29,13 @@ local listLayout = Instance.new("UIListLayout")
 listLayout.Parent = frame
 listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-listLayout.Padding = UDim.new(0,5) -- espacio para touch
+listLayout.Padding = UDim.new(0,5)
 
--- Función para crear botones con tamaño adaptable
+-- Función para crear botones
 local function crearBoton(nombre, parent, borderColor)
     local btn = Instance.new("TextButton")
     btn.Name = nombre
-
-    -- Tamaño adaptativo: ancho relativo con mínimo/ máximo píxeles, altura fija
-    local ancho = math.clamp(parent.AbsoluteSize.X * 0.9, 133, 200)
-    btn.Size = UDim2.new(0, ancho, 0, 25)
-
+    btn.Size = UDim2.new(0,133,0,25)
     btn.BackgroundColor3 = Color3.fromRGB(0,0,0)
     btn.BorderColor3 = borderColor
     btn.BorderSizePixel = 2
@@ -59,7 +55,7 @@ local function activarHabilidad(nombre)
     cooldown.Value = 0
 end
 
--- Botones principales
+-- Crear botones principales
 local nombresBotones = {"Sonic","Cream","Vanilla","Eggman","Bendy","Boris","Cuphead","Mugman","Monika","Sayori","Sans","Frisk","Vortex","Yuri","Chara"}
 local botonesPrincipales = {}
 local layoutIndex = 1
@@ -71,7 +67,7 @@ for _, nombre in ipairs(nombresBotones) do
     botonesPrincipales[nombre] = btn
 end
 
--- Sub-botones de Sonic
+-- Crear sub-botones de Sonic
 local subBotones = {}
 local function crearSubBoton(nombre, borderColor)
     local btn = crearBoton(nombre, frame, borderColor)
@@ -80,11 +76,11 @@ local function crearSubBoton(nombre, borderColor)
     return btn
 end
 
-crearSubBoton("SpeedBoost", Color3.fromRGB(200,200,200))
-crearSubBoton("SpinDash", Color3.fromRGB(200,200,200))
-crearSubBoton("Spring", Color3.fromRGB(200,200,200))
+crearSubBoton("SpeedBoost", Color3.fromRGB(180,180,180))
+crearSubBoton("SpinDash", Color3.fromRGB(180,180,180))
+crearSubBoton("Spring", Color3.fromRGB(180,180,180))
 crearSubBoton("Minion", Color3.fromRGB(80,80,80))
-crearSubBoton("Attack", Color3.fromRGB(200,200,200))
+crearSubBoton("Attack", Color3.fromRGB(180,180,180))
 
 -- Función para actualizar LayoutOrder dinámicamente
 local function actualizarLayout()
@@ -136,7 +132,7 @@ subBotones["Attack"].MouseButton1Click:Connect(function() activarHabilidad("Atta
 -- Botón "-" movible
 local button1 = Instance.new("TextButton")
 button1.Name = "Button1"
-button1.Size = UDim2.new(0, 40, 0, 30) -- tamaño fijo como antes
+button1.Size = UDim2.new(0, 40, 0, 30)
 button1.Position = UDim2.new(0.776,0,0.346,0)
 button1.AnchorPoint = Vector2.new(0.5,0.5)
 button1.BackgroundColor3 = Color3.fromRGB(0,0,0)
@@ -154,7 +150,7 @@ button1.MouseButton1Click:Connect(function()
     isOpen = not isOpen
 end)
 
--- Hacer el botón "-" movible en PC y Móviles
+-- Hacer el botón "-" movible en PC y móviles
 local UIS = game:GetService("UserInputService")
 local dragging = false
 local dragInput
@@ -185,7 +181,7 @@ button1.InputBegan:Connect(function(input)
 end)
 
 button1.InputChanged:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input
     end
 end)
