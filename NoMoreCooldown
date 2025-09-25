@@ -1,0 +1,197 @@
+-- LocalScript final optimizado
+
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MiScreenGui"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.Parent = playerGui
+
+-- ScrollingFrame
+local frame = Instance.new("ScrollingFrame")
+frame.Name = "MiFrame"
+frame.Size = UDim2.new(0.18, 0, 0.30, 0)
+frame.Position = UDim2.new(0.776, 0, 0.042, 0)
+frame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+frame.BorderColor3 = Color3.fromRGB(161,0,0)
+frame.BorderSizePixel = 2
+frame.ScrollBarThickness = 8
+frame.ClipsDescendants = true
+frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+frame.Parent = screenGui
+frame.Visible = true
+
+-- UIListLayout
+local listLayout = Instance.new("UIListLayout")
+listLayout.Parent = frame
+listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+listLayout.Padding = UDim.new(0,5) -- espacio para touch
+
+-- Función para crear botones con tamaño adaptable
+local function crearBoton(nombre, parent, borderColor)
+    local btn = Instance.new("TextButton")
+    btn.Name = nombre
+
+    -- Tamaño adaptativo: ancho relativo con mínimo/ máximo píxeles, altura fija
+    local ancho = math.clamp(parent.AbsoluteSize.X * 0.9, 133, 200)
+    btn.Size = UDim2.new(0, ancho, 0, 25)
+
+    btn.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    btn.BorderColor3 = borderColor
+    btn.BorderSizePixel = 2
+    btn.Text = nombre
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.TextScaled = true
+    btn.Parent = parent
+    return btn
+end
+
+local function activarHabilidad(nombre)
+    local abilityGui = player:WaitForChild("PlayerGui"):WaitForChild("AbilitysGui")
+    local abilityFrame = abilityGui:WaitForChild("AbilityFrame")
+    local habilidad = abilityFrame:WaitForChild(nombre)
+    local config = habilidad:WaitForChild("Configuration")
+    local cooldown = config:WaitForChild("CoolDown")
+    cooldown.Value = 0
+end
+
+-- Botones principales
+local nombresBotones = {"Sonic","Cream","Vanilla","Eggman","Bendy","Boris","Cuphead","Mugman","Monika","Sayori","Sans","Frisk","Vortex","Yuri","Chara"}
+local botonesPrincipales = {}
+local layoutIndex = 1
+
+for _, nombre in ipairs(nombresBotones) do
+    local btn = crearBoton(nombre, frame, Color3.fromRGB(139,0,0))
+    btn.LayoutOrder = layoutIndex
+    layoutIndex += 1
+    botonesPrincipales[nombre] = btn
+end
+
+-- Sub-botones de Sonic
+local subBotones = {}
+local function crearSubBoton(nombre, borderColor)
+    local btn = crearBoton(nombre, frame, borderColor)
+    btn.Visible = false
+    subBotones[nombre] = btn
+    return btn
+end
+
+crearSubBoton("SpeedBoost", Color3.fromRGB(200,200,200))
+crearSubBoton("SpinDash", Color3.fromRGB(200,200,200))
+crearSubBoton("Spring", Color3.fromRGB(200,200,200))
+crearSubBoton("Minion", Color3.fromRGB(80,80,80))
+crearSubBoton("Attack", Color3.fromRGB(200,200,200))
+
+-- Función para actualizar LayoutOrder dinámicamente
+local function actualizarLayout()
+    local index = 1
+    for _, nombre in ipairs(nombresBotones) do
+        local btn = botonesPrincipales[nombre]
+        btn.LayoutOrder = index
+        index += 1
+        if nombre == "Sonic" and subBotones["SpeedBoost"].Visible then
+            for _, subNombre in ipairs({"SpeedBoost","SpinDash","Spring","Minion"}) do
+                subBotones[subNombre].LayoutOrder = index
+                index += 1
+            end
+            if subBotones["Attack"].Visible then
+                subBotones["Attack"].LayoutOrder = index
+                index += 1
+            end
+        end
+    end
+end
+
+-- Toggle Sonic
+local sonicOpen = false
+botonesPrincipales["Sonic"].MouseButton1Click:Connect(function()
+    sonicOpen = not sonicOpen
+    for _, name in ipairs({"SpeedBoost","SpinDash","Spring","Minion"}) do
+        subBotones[name].Visible = sonicOpen
+    end
+    if not sonicOpen then
+        subBotones["Attack"].Visible = false
+    end
+    actualizarLayout()
+end)
+
+-- Toggle Minion (Attack)
+local minionOpen = false
+subBotones["Minion"].MouseButton1Click:Connect(function()
+    minionOpen = not minionOpen
+    subBotones["Attack"].Visible = minionOpen
+    actualizarLayout()
+end)
+
+-- Conectar habilidades
+subBotones["SpeedBoost"].MouseButton1Click:Connect(function() activarHabilidad("SpeedBoost") end)
+subBotones["SpinDash"].MouseButton1Click:Connect(function() activarHabilidad("SpinDash") end)
+subBotones["Spring"].MouseButton1Click:Connect(function() activarHabilidad("Spring") end)
+subBotones["Attack"].MouseButton1Click:Connect(function() activarHabilidad("Attack") end)
+
+-- Botón "-" movible
+local button1 = Instance.new("TextButton")
+button1.Name = "Button1"
+button1.Size = UDim2.new(0, 40, 0, 30) -- tamaño fijo como antes
+button1.Position = UDim2.new(0.776,0,0.346,0)
+button1.AnchorPoint = Vector2.new(0.5,0.5)
+button1.BackgroundColor3 = Color3.fromRGB(0,0,0)
+button1.BorderColor3 = Color3.fromRGB(139,0,0)
+button1.BorderSizePixel = 2
+button1.Text = "-"
+button1.TextColor3 = Color3.fromRGB(255,255,255)
+button1.TextScaled = true
+button1.Parent = screenGui
+
+local isOpen = true
+button1.MouseButton1Click:Connect(function()
+    frame.Visible = not isOpen
+    button1.Text = isOpen and "+" or "-"
+    isOpen = not isOpen
+end)
+
+-- Hacer el botón "-" movible en PC y Móviles
+local UIS = game:GetService("UserInputService")
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    button1.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+button1.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = button1.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+button1.InputChanged:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        dragInput = input
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
