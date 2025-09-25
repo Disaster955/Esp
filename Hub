@@ -1,0 +1,127 @@
+-- Cargar Rayfield desde Sirius
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Crear ventana
+local Window = Rayfield:CreateWindow({
+    Name = "DC Hub",
+    Icon = 0,
+    LoadingTitle = "DIMENSIONAL COALESCENCE Hub",
+    LoadingSubtitle = "by MetalDisaster",
+    ShowText = "Rayfield",
+    Theme = "Default",
+    ToggleUIKeybind = "K",
+    DisableRayfieldPrompts = false,
+    DisableBuildWarnings = false,
+    ConfigurationSaving = { Enabled = false },
+    Discord = { Enabled = false, Invite = "noinvitelink", RememberJoins = true },
+    KeySystem = false,
+})
+
+local Tab = Window:CreateTab("Main", 4483362458)
+
+-------------------------
+-- Variables de scripts remotos
+-------------------------
+local ESP_URL       = "https://raw.githubusercontent.com/Disaster955/Esp/refs/heads/main/Esp"
+local COLLISION_URL = "https://raw.githubusercontent.com/Disaster955/Esp/refs/heads/main/Big%20Hitbox"
+local JUMP_URL      = "https://raw.githubusercontent.com/Disaster955/Esp/refs/heads/main/Infinite%20Jump"
+local FOV_URL       = "https://raw.githubusercontent.com/Disaster955/Esp/refs/heads/main/Fov"
+local NO_COOLDOWN_URL = "https://raw.githubusercontent.com/Disaster955/Esp/refs/heads/main/NoMoreCooldown"
+
+local activeScripts = {}
+
+-------------------------
+-- Funciones para cargar y descargar scripts
+-------------------------
+local function loadRemote(url, key)
+    if activeScripts[key] then return end
+    local success, result = pcall(function()
+        return loadstring(game:HttpGet(url))()
+    end)
+    if success then
+        activeScripts[key] = result
+    else
+        warn("Error cargando script:", key, result)
+    end
+end
+
+local function unloadRemote(key)
+    if activeScripts[key] and typeof(activeScripts[key]) == "function" then
+        pcall(activeScripts[key])
+    end
+    activeScripts[key] = nil
+end
+
+local function toggleScript(key, url, isActive)
+    if isActive then
+        if not activeScripts[key] then
+            loadRemote(url, key)
+        end
+    else
+        unloadRemote(key)
+    end
+end
+
+-------------------------
+-- Toggles existentes
+-------------------------
+Tab:CreateToggle({
+    Name = "ESP",
+    CurrentValue = false,
+    Flag = "ESPToggle",
+    Callback = function(value)
+        toggleScript("ESP", ESP_URL, value)
+    end
+})
+
+Tab:CreateToggle({
+    Name = "Big Hitbox",
+    CurrentValue = false,
+    Flag = "CollisionToggle",
+    Callback = function(value)
+        toggleScript("Collision", COLLISION_URL, value)
+    end
+})
+
+Tab:CreateToggle({
+    Name = "Infinite Jump",
+    CurrentValue = false,
+    Flag = "JumpToggle",
+    Callback = function(value)
+        toggleScript("Jump", JUMP_URL, value)
+    end
+})
+
+Tab:CreateSlider({
+    Name = "FOV",
+    Range = {70, 120},
+    Increment = 1,
+    Suffix = "°",
+    CurrentValue = 70,
+    Flag = "FOVSlider",
+    Callback = function(value)
+        loadRemote(FOV_URL, "FOV")
+        local cam = workspace.CurrentCamera
+        cam.FieldOfView = value
+        game:GetService("RunService").RenderStepped:Connect(function()
+            if cam.FieldOfView ~= value then
+                cam.FieldOfView = value
+            end
+        end)
+    end,
+})
+
+-------------------------
+-- Nuevo botón "No More Cooldowns"
+-------------------------
+Tab:CreateButton({
+    Name = "No More Cooldowns",
+    Callback = function()
+        local success, result = pcall(function()
+            return loadstring(game:HttpGet(NO_COOLDOWN_URL))()
+        end)
+        if not success then
+            warn("Error cargando No More Cooldowns:", result)
+        end
+    end
+})
